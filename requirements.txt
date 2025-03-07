@@ -1,0 +1,10 @@
+SpeechRecognition
+python-docx
+python-multipart
+jinja2
+fastapi
+uvicorn
+google-generativeai
+python-dotenv
+youtube-transcript-api
+pydub
