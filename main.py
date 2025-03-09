@@ -49,7 +49,7 @@ def get_youtube_transcript(video_id):
 
 def summarize_text(text):
     try:
-        response = model.generate_content(f"Summarize the following text:\n\n{text}")
+        response = model.generate_content(f"Summarize the following text in a pointer format:\n\n{text}\n use professional and clear tone and attractive words to maintain reader's engagement")
         return response.text
     except Exception as e:
         return f"Error summarizing text: {e}"
