@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Form, Request, UploadFile, File
+from fastapi import FastAPI, Form, Request, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -118,7 +118,7 @@ async def read_root(request: Request):
 @app.post("/summarize")
 async def summarize(request: Request,
                     youtube_url: str = Form(None),
-                    text: str = Form(None),
+                    text_input: str = Form(None),
                     audio_file: UploadFile = File(None),
                     docx_file: UploadFile = File(None)):
 
@@ -136,10 +136,10 @@ async def summarize(request: Request,
         else:
             error = "Invalid YouTube URL"
 
-    elif text:
-        summary = summarize_text(text)
+    elif text_input  and not youtube_url or audio_file or docx_file:
+        summary = summarize_text(text_input)
 
-    elif audio_file:
+    elif audio_file and not youtube_url or text_input or docx_file:
         try:
             # Save the uploaded audio file temporarily
             with open("temp_audio.wav", "wb") as f:
@@ -150,7 +150,7 @@ async def summarize(request: Request,
         except Exception as e:
             error = f"Error processing audio: {e}"
 
-    elif docx_file:
+    elif docx_file and not youtube_url or text_input or audio_file:
         try:
             # Save the uploaded docx file temporarily
             with open("temp_doc.docx", "wb") as f:
@@ -161,6 +161,45 @@ async def summarize(request: Request,
         except Exception as e:
             error = f"Error processing document: {e}"
 
+    else:
+        error = f"Error no input provided !"
+
     return templates.TemplateResponse("index.html", {"request": request, "summary": summary, "error": error})
+
+'''
+@app.post("/summarize")
+async def summarize(
+    text: str = Form(None),  # Text input from form
+    file: UploadFile = File(None)  # File input from form
+):
+    if text and not file:
+        # Process text input
+        return {"summary": summarize_text(text)}
+
+    elif file and not text:
+        # Process file input
+        if allowed_file(file.filename):
+            return {"summary": process_file(file)}
+        else:
+            raise HTTPException(status_code=400, detail="Invalid file format.")
+
+    elif not text and not file:
+        raise HTTPException(status_code=400, detail="No input provided. Please enter text or upload a file.")
+
+    else:
+        raise HTTPException(status_code=400, detail="Provide only one input at a time (either text or file).")
+
+def process_text(text: str):
+    # Add text summarization logic here
+    return f"Summarized text: {text[:50]}..."  # Example summary
+
+def process_file(file: UploadFile):
+    # Add file processing logic here
+    return "Summarized file content"
+
+def allowed_file(filename: str):
+    ALLOWED_EXTENSIONS = {'txt', 'pdf', 'wav', 'mp3'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+'''
 
 #To run "uvicorn main:app --reload"
